@@ -3,6 +3,7 @@
 ## Pre-requiste
 * Docker
 * Kubernetes
+* Istio Service Mesh
 
 ## How To Use
 
