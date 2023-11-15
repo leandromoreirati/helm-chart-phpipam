@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.application.name }}
+  namespace: {{ .Values.application.name }}
+  labels: {{ toYaml .Values.application.labels | nindent 4 }}
+spec:
+  replicas: {{ .Values.application.replicas }}
+  progressDeadlineSeconds: {{ .Values.application.progressDeadlineSeconds | default 300 }}
+  selector:
+    matchLabels: {{ toYaml .Values.application.labels | nindent 6 }}
+  template:
+    metadata:
+      labels: {{ toYaml .Values.application.labels | nindent 8 }}
+    spec:
+    {{- if .Values.application }}
+      serviceAccountName: {{ .Values.application.name }}
+    {{- end }}
+      containers:
+        - name: {{ .Values.application.name }}-web
+          image: "phpipam/phpipam-www:1.4x"
+          imagePullPolicy: {{ .Values.application.imagePullPolicy | quote }}
+          env:
+            # From a Secret:
+          - name: TZ
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.application.name }}
+                key: TZ
+          - name: IPAM_DATABASE_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.application.name }}
+                key: IPAM_DATABASE_HOST
+          - name: IPAM_DATABASE_PASS
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.application.name }}
+                key: IPAM_DATABASE_PASS
+          - name: IPAM_DATABASE_WEBHOST
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.application.name }}
+                key: IPAM_DATABASE_WEBHOST
+          - name: IPAM_DATABASE_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.application.name }}
+                key: IPAM_DATABASE_NAME
+          - name: IPAM_DATABASE_USER
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.application.name }}
+                key: IPAM_DATABASE_USER
+          - name: IPAM_DATABASE_PORT
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.application.name }}
+                key: IPAM_DATABASE_PORT
+        {{- if .Values.application.containers.resources }}
+          resources: {{ toYaml .Values.application.containers.resources | nindent 12 }}
+        {{- end }}
+# A "readiness probe" won't declare a pod to be "running" until this probe
+# succeeds. Amongst other things, this means that a new image that's meant to
+# replace another one won't be able to do so until this check succeeds
+          {{- if .Values.application.containers.readinessProbe }}
+          readinessProbe: {{ toYaml .Values.application.containers.readinessProbe | nindent 12 }}
+          {{- end }}
+# Like the "readiness probe" except this is a check that lasts during a pod's
+# lifetime. If it stops responding for any reason, Kubernetes will tear it down
+# and try to start a fresh pod
+          {{- if .Values.application.containers.livenessProbe }}
+          livenessProbe: {{ toYaml .Values.application.containers.livenessProbe | nindent 12 }}
+          {{- end }}
+          ports:
+            - containerPort: {{ .Values.application.port | default "80" }}
+              name: http-{{ .Values.application.name }}
+              protocol:  {{ .Values.application.protocol | default "TCP" }}
+        - name: {{ .Values.application.name }}-cron
+          image: {{ .Values.application.images.cron }}
+          imagePullPolicy: {{ .Values.application.imagePullPolicy | quote }}
+          env:
+          - name: TZ
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.application.name }}
+                key: TZ
+          - name: IPAM_DATABASE_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.application.name }}
+                key: IPAM_DATABASE_HOST
+          - name: IPAM_DATABASE_PASS
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.application.name }}
+                key: IPAM_DATABASE_PASS
+          - name: IPAM_DATABASE_WEBHOST
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.application.name }}
+                key: IPAM_DATABASE_WEBHOST
+          - name: SCAN_INTERVAL
+            valueFrom:
+              configMapKeyRef:
+                name: {{ .Values.application.name }}
+                key: CRON_SCAN_INTERVAL

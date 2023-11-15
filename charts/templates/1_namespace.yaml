@@ -1,0 +1,7 @@
+{{- if eq .Values.namespace.create "true" -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.application.name | nindent 2 }}
+  labels: {{- toYaml .Values.application.labels | indent 2 -}}
+{{- end -}}

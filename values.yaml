@@ -1,0 +1,65 @@
+application:
+  name : phpipam
+  domain: meuingress.com
+  replicas: 1
+  images:
+    web: phpipam/phpipam-www:1.4x
+    cron: phpipam/phpipam-cron:1.4x
+  imagePullPolicy: IfNotPresent
+  ports: 
+    port: 80
+    targetPort: 8080
+    name: http
+  labels:
+    kubernetes.io/metadata.name: phpipam
+    app: phpipam
+  podlabels:
+    sidecar.istio.io/inject: "true"
+    kubernetes.io/metadata.name: phpipam
+    app: phpipam
+  service:
+    #type: NodePort
+    type: ClusterIP
+  containers:
+    resources:
+      limits:
+        cpu: 800m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 768Mi
+    livenessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: "/index.php?page=login"
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 40
+      successThreshold: 1
+      timeoutSeconds: 25
+    readinessProbe:
+      failureThreshold: 3
+      httpGet:
+        path: "/index.php?page=login"
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 25
+      successThreshold: 1
+      timeoutSeconds: 
+
+namespace:
+  create: "false"
+  name: phpipam
+  labels:
+    istio-injection: "enabled"
+
+configmap:
+  TZ: America/Sao_Paulo
+  IPAM_DATABASE_HOST: mysql.mysql.svc.cluster.local
+  #IPAM_DATABASE_HOST: 192.168.56.103
+  IPAM_DATABASE_USER: phpipam
+  IPAM_DATABASE_NAME: phpipam
+  IPAM_DATABASE_PASS: 1qaz@WSX
+  IPAM_DATABASE_WEBHOST: '%'
+  IPAM_DATABASE_PORT: "3306"
+  CRON_SCAN_INTERVAL: 1h

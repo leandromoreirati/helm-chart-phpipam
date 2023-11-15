@@ -1,0 +1,17 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Values.application.name }}
+  namespace: {{ .Values.application.name }}
+  labels: {{ toYaml .Values.application.labels | nindent 4 }}
+spec:
+  selector: {{ toYaml .Values.application.labels | nindent 4 }}
+  type: {{ .Values.application.service.type | default "ClusterIP" }}
+  ports:
+    - name: {{ .Values.application.name  }}-http
+      protocol: {{ .Values.application.service.protocol | default "TCP" }}
+      port: {{ int .Values.application.service.port | default "80" }}
+      targetPort: {{ int .Values.application.service.targetPort | default "80" }}
+      {{- if .Values.application.service.nodePort }}
+      nodePort: {{ .Values.application.service.nodePort }}
+      {{- end }}
