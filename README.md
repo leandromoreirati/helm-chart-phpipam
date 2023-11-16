@@ -43,6 +43,14 @@ kubectl apply -f https://gist.githubusercontent.com/leandromoreirati/b5be442d3fc
 4. Install PHPIPAN
 
 ```bash
+git clone https://github.com/leandromoreirati/helm-chart-phpipam.git
+```
+
+```bash
+cd helm-chart-phpipam
+```
+
+```bash
 helm -n phpipam upgrade --install --create-namespace phpipam -f values.yaml charts/
 ```
 
